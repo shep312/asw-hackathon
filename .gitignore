@@ -1,0 +1,5 @@
+
+# ignore all the data folders
+data/*.csv
+data/*.xlsx
+data/**/*.csv
