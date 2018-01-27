@@ -1,0 +1,9 @@
+
+# ignore all the data folders
+data/*.csv
+data/*.xlsx
+data/**/*.csv
+
+# Don't load predictions
+output/*.csv
+output/*.json
