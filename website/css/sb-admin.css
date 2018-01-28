@@ -234,5 +234,73 @@ ul.alert-dropdown {
 .active-index{
     color: #5087ed!important;
     background-color: #fff!important;
-     border: none!important;
+    border: none!important;
 }
+
+#chartContainer{
+    margin-bottom: 56px!important;
+}
+
+.decision-confirm{
+    width: 100%!important;
+    line-height: 1.5;
+    margin-top: 32px;margin-bottom: 24px;
+    border: 2px solid #eeefef;
+}
+
+.decision-confirm th, .decision-confirm td{
+    padding: 12px;
+    border: 2px solid #eeefef;
+    text-align: center;
+}
+
+.decision-confirm th{
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.decision-confirm td{
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.decision-confirm input[type='number']{
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 2px;
+    border: none;
+    background: rgba(0,0,0,0.05);
+    width: 96px;
+    color: rgba(0,0,0, 0.8);
+    text-align: center;
+}
+
+.decision-confirm input[type='checkbox']{
+    border: 1px solid #eeefef;
+    border: 2px;
+    background: #eeefef;
+    width: 16px;
+    height: 16px;
+}
+
+.btn-bar{
+    padding: 0 15px;
+    margin-bottom: 48px;
+}
+
+.confirm-btn{
+    font-size: 16px;
+    padding: 12px 16px;
+    background: #5b84d1;
+    color: #ffffff;
+    border: none!important;
+    border-radius: 100px;
+    float: right;
+    box-shadow: 0 1px 7px rgba(0,0,0,.2);
+    transition: all 0.3s ease-in-out;
+}
+
+.confirm-btn:hover{
+    background: #52a1db;
+    transition: all 0.3s ease-in-out;
+}
+
+
