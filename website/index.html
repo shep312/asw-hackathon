@@ -1,0 +1,672 @@
+d<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>WAT'S UP</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/sb-admin.css" rel="stylesheet">
+
+    <!-- Morris Charts CSS -->
+    <link href="css/plugins/morris.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- Canvas JS -->
+    <script src="js/canvasjs.min.js"></script>
+    <script src="vendor/jquery/jquery.min.js"></script>
+
+    <script>
+        var Login_Status = localStorage.getItem('Login_Status');
+        console.log(Login_Status);
+        if (Login_Status == null || Login_Status == "" ){
+            window.location.replace("login.html");
+        }
+        function Logout(){
+            localStorage.removeItem('Login_Status');
+            window.location.replace("login.html");
+        }
+
+        var secondary_axis_product_json_1_array= [];
+        var secondary_axis_product_json_2_array= [];
+        
+        var Login_Status = localStorage.getItem('Login_Status');
+        console.log(Login_Status);
+        if (Login_Status == null || Login_Status == "" ){
+            window.location.replace("login.html");
+        }
+        function Logout(){
+            localStorage.removeItem('Login_Status');
+            window.location.replace("login.html");
+        }
+        var getUrlParameter = function getUrlParameter(sParam) {
+            var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+            for (i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return sParameterName[1] === undefined ? true : sParameterName[1];
+                }
+            }
+        };
+        
+        
+        
+
+        $('document').ready(function() {
+            $("#Chat1_detail_div").hide();
+            var target_store_ID = parseInt(getUrlParameter('store_ID'));
+            console.log(isNaN(target_store_ID));
+            if (isNaN(target_store_ID)){
+                reload_Store_ID('11880');
+            }
+            var product_json;
+            
+            $.getJSON("product.json", function(json) {
+                product_json = json;
+                var product_json_length = product_json.length;
+                for(var count = 0; count < product_json_length; count++){
+                    if (product_json[count]["STORE_ID"] == target_store_ID){
+                        //console.log(product_json[count]);
+                        if (secondary_axis_product_json_1_array.length <=4){
+                            secondary_axis_product_json_1_array.unshift({
+                                id:product_json[count]["PRODUCT_ID"],
+                                y: product_json[count]["current_price"],
+                                label: product_json[count]["PRODUCT_NAME"].toString()
+                            });
+                            secondary_axis_product_json_2_array.unshift({
+                                id:product_json[count]["PRODUCT_ID"],
+                                y: product_json[count]["optimum_price"],
+                                label: product_json[count]["PRODUCT_NAME"].toString()
+                            });
+                        }
+                    }
+                    /*
+                    secondary_axis_product_json_1_array.unshift({
+                        y: product_json[count]["opportunity"],
+                        label: product_json[count]["STORE_ID"].toString()
+                    });*/
+                    
+                }
+            });
+            
+            console.log(secondary_axis_product_json_1_array);
+            console.log(secondary_axis_product_json_2_array);
+            
+            setTimeout(function(){
+                generate_chart();
+            },250);
+        });
+        
+        function generate_chart() {
+            var chart = new CanvasJS.Chart("chartContainer", {
+                exportEnabled: true,
+                animationEnabled: true,
+                title:{
+                    text: ""
+                },
+                subtitles: [{
+                    text: ""
+                }], 
+                axisX: {
+                    title: "Product Name",
+                    labelFontColor: "#8d8d8d",
+                    titleFontColor: "#8d8d8d",
+                    tickColor: "#8d8d8d"
+                },
+                axisY: {
+                   
+                    title: "Price",
+                    titleFontColor: "#8d8d8d",
+                    lineColor: "#8d8d8d",
+                    labelFontColor: "#8d8d8d",
+                    tickColor: "#8d8d8d"
+                },
+                axisY2: {
+                    title: "Price",
+                    titleFontColor: "#C0504E",
+                    lineColor: "#C0504E",
+                    labelFontColor: "#C0504E",
+                    tickColor: "#C0504E",
+                   
+                },
+                toolTip: {
+                    shared: true
+                },
+                legend: {
+                    cursor: "pointer",
+                    itemclick: toggleDataSeries,
+                    fontColor: "#8d8d8d"
+                },
+                data: [{
+                    type: "column",
+                    name: "optimum_price",
+                    showInLegend: true,      
+                    yValueFormatString: "##,##0.# Units",
+                    click: product_json_onclick,
+                    dataPoints: secondary_axis_product_json_1_array,
+                    color: " #24C6DC"
+                },
+                {
+                    type: "column",
+                    name: "current_price",
+                    //axisYType: "secondary",
+                    showInLegend: true,
+                    yValueFormatString: "##,##0.# Units",
+                    click: product_json_onclick,
+                    dataPoints: secondary_axis_product_json_2_array,
+                     color: " #514A9D"
+                }]
+            });
+            chart.render();
+        };
+        
+        var price_pie = [];
+        function generate_product_compare_chart(){
+            price_pie = [];
+            console.log(secondary_axis_product_json_1_array);
+            console.log(secondary_axis_product_json_2_array);
+            var final_percentage = [];
+            
+            var total = 0;
+            var each_price = 0;
+            for(var count = 0; count < secondary_axis_product_json_1_array.length; count++){
+                var optimum_price = secondary_axis_product_json_1_array[count]["y"];
+                var current_price = secondary_axis_product_json_2_array[count]["y"];
+                total += (optimum_price - current_price);
+            }
+            
+            for(var count = 0; count < secondary_axis_product_json_1_array.length; count++){
+                var optimum_price = secondary_axis_product_json_1_array[count]["y"];
+                var current_price = secondary_axis_product_json_2_array[count]["y"];
+                each_price = (optimum_price - current_price);
+                    
+                var a = parseInt((each_price / total)*100);
+                price_pie.push({
+                    y:a,
+                    label:secondary_axis_product_json_1_array[count]["label"]
+                });
+            
+            }
+            
+            var chart = new CanvasJS.Chart("chartContainer_2", {
+                theme: "light2", // "light1", "light2", "dark1", "dark2"
+                exportEnabled: true,
+                animationEnabled: true,
+                title: {
+                    text: "Desktop Browser Market Share in 2016"
+                },
+                data: [{
+                    type: "pie",
+                    startAngle: 25,
+                    toolTipContent: "<b>{label}</b>: {y}%",
+                    showInLegend: "true",
+                    legendText: "{label}",
+                    indexLabelFontSize: 16,
+                    indexLabel: "{label} - {y}%",
+                    dataPoints: price_pie
+                }]
+            });
+            chart.render();
+        }
+        
+
+        function toggleDataSeries(e) {
+            if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                e.dataSeries.visible = false;
+            } else {
+                e.dataSeries.visible = true;
+            }
+            e.chart.render();
+        }
+        
+        
+        function product_json_onclick(e){
+            if (e.dataPoint.id != null){
+                generate_product_compare_chart();
+
+                $("#Chat1_detail_div").show();
+                //console.log(e.dataPoint.id);
+            }
+        }
+
+        function reload_Store_ID(id){
+            var x = document.getElementById("list_"+id);
+
+            window.location.replace('index.html?store_ID='+id);
+        }
+        
+    </script>
+</head>
+
+<body id="page-top" class="index">
+<!--
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top navbar-custom">
+        <div class="container">
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span> Menu <i class="fa fa-bars"></i>
+                </button>
+                <a class="navbar-brand" href="#page-top">Start Bootstrap</a>
+            </div>
+
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="hidden">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#Chat1">Chat1</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#about">About</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#contact">Contact</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="" onclick="Logout()">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+-->
+
+    <!-- Portfolio Grid Section -->
+<!--
+    <section id="Chat1">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2>Chat 1</h2>
+                    <hr class="star-primary">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2"></div>
+                    <div class="col-lg-8">
+                        <div id="chartContainer" style="height: 370px; max-width: 920px; margin: 0px auto;"></div>
+                    </div>
+                <div class="col-lg-2"></div>
+            </div>
+           
+        </div>
+    </section>
+-->
+    
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header" style="    width: 225px;
+    background-color: #5b84d1; border-bottom: 1px solid #5b84d1;">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#"> <strong>WAT'S UP?</strong> </a>
+            </div>
+            <!-- Top Menu Items -->
+            <ul class="nav navbar-right top-nav">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-envelope"></i> <b class="caret"></b></a>
+                    <ul class="dropdown-menu message-dropdown">
+                        <li class="message-preview">
+                            <a href="#">
+                                <div class="media">
+                                    <span class="pull-left">
+                                        <img class="media-object" src="http://placehold.it/50x50" alt="">
+                                    </span>
+                                    <div class="media-body">
+                                        <h5 class="media-heading"><strong>John Smith</strong>
+                                        </h5>
+                                        <p class="small text-muted"><i class="fa fa-clock-o"></i> Yesterday at 4:32 PM</p>
+                                        <p>Lorem ipsum dolor sit amet, consectetur...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="message-preview">
+                            <a href="#">
+                                <div class="media">
+                                    <span class="pull-left">
+                                        <img class="media-object" src="http://placehold.it/50x50" alt="">
+                                    </span>
+                                    <div class="media-body">
+                                        <h5 class="media-heading"><strong>John Smith</strong>
+                                        </h5>
+                                        <p class="small text-muted"><i class="fa fa-clock-o"></i> Yesterday at 4:32 PM</p>
+                                        <p>Lorem ipsum dolor sit amet, consectetur...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="message-preview">
+                            <a href="#">
+                                <div class="media">
+                                    <span class="pull-left">
+                                        <img class="media-object" src="http://placehold.it/50x50" alt="">
+                                    </span>
+                                    <div class="media-body">
+                                        <h5 class="media-heading"><strong>John Smith</strong>
+                                        </h5>
+                                        <p class="small text-muted"><i class="fa fa-clock-o"></i> Yesterday at 4:32 PM</p>
+                                        <p>Lorem ipsum dolor sit amet, consectetur...</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="message-footer">
+                            <a href="#">Read All New Messages</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-bell"></i> <b class="caret"></b></a>
+                    <ul class="dropdown-menu alert-dropdown">
+                        <li>
+                            <a href="#">Alert Name <span class="label label-default">Alert Badge</span></a>
+                        </li>
+                        <li>
+                            <a href="#">Alert Name <span class="label label-primary">Alert Badge</span></a>
+                        </li>
+                        <li>
+                            <a href="#">Alert Name <span class="label label-success">Alert Badge</span></a>
+                        </li>
+                        <li>
+                            <a href="#">Alert Name <span class="label label-info">Alert Badge</span></a>
+                        </li>
+                        <li>
+                            <a href="#">Alert Name <span class="label label-warning">Alert Badge</span></a>
+                        </li>
+                        <li>
+                            <a href="#">Alert Name <span class="label label-danger">Alert Badge</span></a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">View All</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> John Smith <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="#"><i class="fa fa-fw fa-user"></i> Profile</a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fa fa-fw fa-envelope"></i> Inbox</a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fa fa-fw fa-gear"></i> Settings</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <!-- Sidebar Menu Items - These collapse to the responsive navigation menu on small screens -->
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li class="active">
+                        <a href="index.html"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="fa fa-fw fa-bar-chart-o"></i> Price</a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="fa fa-fw fa-bar-chart-o"></i> Assortment</a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="fa fa-fw fa-power-off"></i>  Log Out</a>
+                    </li>
+                    
+                   
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </nav>
+
+        <div id="page-wrapper">
+
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div style="height: 30px;"></div>
+                    </div>
+                </div>
+<!--
+ <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"> TOP 10 WASTON</h3>
+                            </div>
+                            <div class="panel-body">
+                            </div>
+                        </div>
+     </div>
+                </div>
+-->
+                
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"> TOP 10 WASTON</h3>
+                            </div>
+                            <div class="panel-body">
+                                <section id="Chat1">
+                                    <div class="container">
+
+                                        <div class="row">
+                                            <div class="col-lg-2">
+                                            
+                                            <div class="row">
+  <div class="col-4">
+    <div class="list-group" id="list-tab" role="tablist">
+        <a class="list-group-item list-group-item-action active active-index" id="list_11880" data-toggle="list"
+           onclick="reload_Store_ID('11880')"  role="tab" aria-controls="home">11880</a>
+        <a class="list-group-item list-group-item-action list-group-item-index" id="list_12982" data-toggle="list"
+           onclick="reload_Store_ID('12982')" role="tab" aria-controls="profile">12982</a>
+        <a class="list-group-item list-group-item-action list-group-item-index" id="list_12239" data-toggle="list" 
+           onclick="reload_Store_ID('12239')" role="tab" aria-controls="messages">12239</a>
+        <a class="list-group-item list-group-item-action list-group-item-index" id="list_11963" data-toggle="list" onclick="reload_Store_ID('11963')" role="tab" aria-controls="settings">11963</a>
+           <a class="list-group-item list-group-item-action list-group-item-index" id="list_12249" data-toggle="list" onclick="reload_Store_ID('12249')" role="tab" aria-controls="settings">12249</a>
+           <a class="list-group-item list-group-item-action list-group-item-index" id="list_12000" data-toggle="list" onclick="reload_Store_ID('12000')" role="tab" aria-controls="settings">12000</a>
+           <a class="list-group-item list-group-item-action list-group-item-index" id="list_11961" data-toggle="list" onclick="reload_Store_ID('11961')" role="tab" aria-controls="settings">11961</a>
+           <a class="list-group-item list-group-item-action list-group-item-index" id="list_11998" data-toggle="list" onclick="reload_Store_ID('11998')" role="tab" aria-controls="settings">11998</a>
+           <a class="list-group-item list-group-item-action list-group-item-index" id="list_11880" data-toggle="list" onclick="reload_Store_ID('11880')" role="tab" aria-controls="settings">11880</a>
+           <a class="list-group-item list-group-item-action list-group-item-index" id="list_12054"  data-toggle="list" onclick="reload_Store_ID('12054')" role="tab" aria-controls="settings">12054</a>
+         
+      </div>
+  </div>
+  <div class="col-8">
+    <div class="tab-content" id="nav-tabContent">
+      <div class="tab-pane fade show active" id="list-home" role="tabpanel" aria-labelledby="list-home-list">...</div>
+      <div class="tab-pane fade" id="list-profile" role="tabpanel" aria-labelledby="list-profile-list">...</div>
+      <div class="tab-pane fade" id="list-messages" role="tabpanel" aria-labelledby="list-messages-list">...</div>
+      <div class="tab-pane fade" id="list-settings" role="tabpanel" aria-labelledby="list-settings-list">...</div>
+    </div>
+  </div>
+</div>
+                                            </div>
+                                                <div class="col-lg-8">
+                                                    <div id="chartContainer" style="height: 370px; max-width: 920px; margin: 0px auto;"></div>
+                                                </div>
+                                            <div class="col-lg-2"></div>
+                                        </div>
+
+                                    </div>
+                                </section>
+                                   <div style="height: 30px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="panel panel-default">
+                           
+                            <div class="panel-body">
+                                 <div class="row">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 52px;
+    color: #5087ed;
+    padding-top: 5px;">
+                                <i class="fa fa-cloud" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                                <div class="row" style="padding-top: 10px;">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 20px;
+    color: #5087ed;
+    padding-top: 5px;">
+                             <p>  9&#8451;</p>
+
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="col-lg-3">
+                        <div class="panel panel-default">
+                                       <div class="panel-body">
+                                 <div class="row">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 52px;
+    color: #5087ed;
+    padding-top: 5px;">
+                              <i class="fa fa-bolt" aria-hidden="true"></i>
+
+
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                                <div class="row" style="padding-top: 10px;">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 20px;
+    color: #5087ed;
+    padding-top: 5px;">
+                             <p>  12&#8451;</p>
+
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                 <div class="row">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 52px;
+    color: #5087ed;
+    padding-top: 5px;">
+                                <i class="fa fa-cloud" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                                <div class="row" style="padding-top: 10px;">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 20px;
+    color: #5087ed;
+    padding-top: 5px;">
+                              <p>  9&#8451;</p>
+
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="panel panel-default">
+                           <div class="panel-body">
+                                 <div class="row">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 52px;
+    color: #5087ed;
+    padding-top: 5px;">
+                                <i class="fa fa-cloud" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                                <div class="row" style="padding-top: 10px;">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-8" style="    text-align: center;
+    font-size: 20px;
+    color: #5087ed;
+    padding-top: 5px;">
+                               <p>  16&#8451;</p>
+
+                                    </div>
+                                    <div class="col-lg-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+            </div>
+            <!-- /.container-fluid -->
+
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>    
+    
+    
+    
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Morris Charts JavaScript -->
+    <script src="js/plugins/morris/raphael.min.js"></script>
+    <script src="js/plugins/morris/morris.min.js"></script>
+    <script src="js/plugins/morris/morris-data.js"></script>
+
+    <!-- Contact Form JavaScript -->
+    <script src="js/jqBootstrapValidation.js"></script>
+
+</body>
+
+</html>

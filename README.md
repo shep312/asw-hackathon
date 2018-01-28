@@ -4,7 +4,7 @@
 
 This repo contains a web portal allowing ASW colleagues to visualise and confirm price changes suggested by our model, as well as a notebook illustrating the performace of the model.
 
-The model is a LightGBM algo that can understand ASW's pricing strategy well enough to predict it accurately. Our concept is then that through a series of sale price experiments (real-life gradient descent), we can understand our product's price elasticity by a number of feautres (location, weather, competitor data) to optimise prices for profit.
+The model is a LightGBM algo that can understand ASW's pricing strategy well enough to predict it accurately. Our concept is then that through a series of sale price experiments (real-life gradient descent), we can understand our products' price elasticity across a number of dimensions (location, weather, scraped competitor data) to optimise prices for profit.
 
 ## ASW customer impact
 
