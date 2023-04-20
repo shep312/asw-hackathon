@@ -25,6 +25,6 @@
     "url": "https://github.com/BlackrockDigital/startbootstrap-freelancer.git"
   },
   "dependencies": {
-    "http-server": "^0.11.1"
+    "http-server": "^14.1.1"
   }
 }
